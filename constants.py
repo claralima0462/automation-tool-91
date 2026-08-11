@@ -1,28 +1,39 @@
-import json
+CACHE_SIZE = 128
+DEFAULT_TIMEOUT = 30
+MAX_RETRIES = 5
+API_ENDPOINT = 'https://api.example.com'
+STATUS_SUCCESS = 'success'
+STATUS_FAILURE = 'failure'
+ERROR_MESSAGES = {
+    'timeout': 'The request has timed out.',
+    'not_found': 'The requested resource was not found.',
+    'unauthorized': 'You do not have permission to access this resource.',
+}
 
-# Default configuration constants
+# Response codes for REST API
+HTTP_OK = 200
+HTTP_NOT_FOUND = 404
+HTTP_UNAUTHORIZED = 401
+HTTP_SERVER_ERROR = 500
+
+# Commonly used file extensions
+FILE_EXTENSIONS = {
+    'json': '.json',
+    'xml': '.xml',
+    'txt': '.txt',
+    'csv': '.csv',
+}
+
+# Default settings for the application
 DEFAULT_SETTINGS = {
-    'max_items': 100,
-    'timeout': 30,
-    'retry_attempts': 3,
-    'log_level': 'INFO',
+    'language': 'en',
+    'theme': 'light',
+    'notifications': True,
 }
 
-# API endpoint constants
-API_ENDPOINTS = {
-    'users': 'https://api.example.com/users',
-    'posts': 'https://api.example.com/posts',
-    'comments': 'https://api.example.com/comments',
+# Network configurations
+NETWORK_CONFIG = {
+    'max_connections': 10,
+    'keep_alive': True,
+    'timeout': DEFAULT_TIMEOUT,
 }
-
-# Function to save constants to a JSON file
-def save_constants_to_json(filepath):
-    try:
-        with open(filepath, 'w') as json_file:
-            json.dump({
-                'default_settings': DEFAULT_SETTINGS,
-                'api_endpoints': API_ENDPOINTS,
-            }, json_file, indent=4)
-            print(f'Constants saved to {filepath}')
-    except Exception as e:
-        print(f'Error saving constants: {e}')
