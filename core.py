@@ -1,32 +1,27 @@
 import time
 import requests
+from requests.exceptions import RequestException
 
-class NetworkError(Exception):
-    pass
+def retry_request(url, max_retries=3, wait_time=2):
+    attempts = 0
+    while attempts < max_retries:
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  # Raise an error for bad status codes
+            return response.json()  # Return JSON if request is successful
+        except RequestException as e:
+            attempts += 1
+            print(f'Network error: {e}, attempt {attempts}/{max_retries}')
+            if attempts < max_retries:
+                time.sleep(wait_time)  # Wait before retrying
+            else:
+                print('Max retries reached; raising exception')
+                raise
 
-def retry_decorator(retries=3, delay=2):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            for attempt in range(retries):
-                try:
-                    return func(*args, **kwargs)
-                except (requests.RequestException, NetworkError) as e:
-                    if attempt < retries - 1:
-                        time.sleep(delay)
-                    else:
-                        raise NetworkError(f'Network operation failed after {retries} attempts') from e
-        return wrapper
-    return decorator
-
-@retry_decorator(retries=5)
-def fetch_data(url):
-    response = requests.get(url)
-    response.raise_for_status()
-    return response.json()
-
+# Example usage:
 if __name__ == '__main__':
     try:
-        data = fetch_data('https://api.example.com/data')
+        data = retry_request('https://api.example.com/data')
         print(data)
-    except NetworkError as e:
-        print(e)
+    except Exception as e:
+        print(f'Failed to retrieve data: {e}')
