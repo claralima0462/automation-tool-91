@@ -1,27 +1,25 @@
 import time
-import requests
-from requests.exceptions import RequestException
+import random
+from validators import validate_input
 
-def retry_request(url, max_retries=3, wait_time=2):
-    attempts = 0
-    while attempts < max_retries:
-        try:
-            response = requests.get(url)
-            response.raise_for_status()  # Raise an error for bad status codes
-            return response.json()  # Return JSON if request is successful
-        except RequestException as e:
-            attempts += 1
-            print(f'Network error: {e}, attempt {attempts}/{max_retries}')
-            if attempts < max_retries:
-                time.sleep(wait_time)  # Wait before retrying
-            else:
-                print('Max retries reached; raising exception')
-                raise
+class AutoClicker:
+    def __init__(self, click_interval=1, click_count=10):
+        self.click_interval = click_interval
+        self.click_count = click_count
 
-# Example usage:
+    def start_clicking(self):
+        for _ in range(self.click_count):
+            if not validate_input(self.click_interval, self.click_count):
+                print('Invalid input parameters. Stopping the clicker.')
+                return
+            self.perform_click()
+            time.sleep(self.click_interval)
+
+    def perform_click(self):
+        print('Performed a click!')
+
 if __name__ == '__main__':
-    try:
-        data = retry_request('https://api.example.com/data')
-        print(data)
-    except Exception as e:
-        print(f'Failed to retrieve data: {e}')
+    click_interval = random.uniform(0.5, 2.0)
+    click_count = random.randint(1, 20)
+    clicker = AutoClicker(click_interval, click_count)
+    clicker.start_clicking()
