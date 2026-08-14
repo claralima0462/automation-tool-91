@@ -1,39 +1,34 @@
-CACHE_SIZE = 128
-DEFAULT_TIMEOUT = 30
-MAX_RETRIES = 5
-API_ENDPOINT = 'https://api.example.com'
-STATUS_SUCCESS = 'success'
-STATUS_FAILURE = 'failure'
-ERROR_MESSAGES = {
-    'timeout': 'The request has timed out.',
-    'not_found': 'The requested resource was not found.',
-    'unauthorized': 'You do not have permission to access this resource.',
-}
+# Constants used throughout the autoclicker
 
-# Response codes for REST API
-HTTP_OK = 200
-HTTP_NOT_FOUND = 404
-HTTP_UNAUTHORIZED = 401
-HTTP_SERVER_ERROR = 500
+# Default click interval in seconds
+DEFAULT_CLICK_INTERVAL = 0.1
 
-# Commonly used file extensions
-FILE_EXTENSIONS = {
-    'json': '.json',
-    'xml': '.xml',
-    'txt': '.txt',
-    'csv': '.csv',
-}
+# Mouse button options
+LEFT_BUTTON = 1
+RIGHT_BUTTON = 2
+MIDDLE_BUTTON = 3
 
-# Default settings for the application
-DEFAULT_SETTINGS = {
-    'language': 'en',
-    'theme': 'light',
-    'notifications': True,
-}
+# Key constants for controlling the autoclicker
+START_KEY = 's'
+STOP_KEY = 'e'
+RESET_KEY = 'r'
 
-# Network configurations
-NETWORK_CONFIG = {
-    'max_connections': 10,
-    'keep_alive': True,
-    'timeout': DEFAULT_TIMEOUT,
+# Screen resolution constants
+SCREEN_WIDTH = 1920
+SCREEN_HEIGHT = 1080
+
+# Set the maximum number of clicks allowed
+MAX_CLICKS = 10000
+
+# Log file configuration
+LOG_FILE_PATH = "autoclicker.log"
+LOG_LEVEL = "DEBUG"
+
+# Configuration for the autoclicker
+CONFIG = {
+    'click_interval': DEFAULT_CLICK_INTERVAL,
+    'max_clicks': MAX_CLICKS,
+    'screen_resolution': (SCREEN_WIDTH, SCREEN_HEIGHT),
+    'log_file': LOG_FILE_PATH,
+    'log_level': LOG_LEVEL,
 }
