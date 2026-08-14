@@ -1,25 +1,27 @@
-import time
-import random
-from validators import validate_input
+import json
+import os
+class AutoClickerData:
+    def __init__(self, data_file='click_data.json'):
+        self.data_file = data_file
+        self.click_data = self.load_data()
 
-class AutoClicker:
-    def __init__(self, click_interval=1, click_count=10):
-        self.click_interval = click_interval
-        self.click_count = click_count
+    def load_data(self):
+        if os.path.exists(self.data_file):
+            with open(self.data_file, 'r') as file:
+                return json.load(file)
+        return []
 
-    def start_clicking(self):
-        for _ in range(self.click_count):
-            if not validate_input(self.click_interval, self.click_count):
-                print('Invalid input parameters. Stopping the clicker.')
-                return
-            self.perform_click()
-            time.sleep(self.click_interval)
+    def save_data(self):
+        with open(self.data_file, 'w') as file:
+            json.dump(self.click_data, file)
 
-    def perform_click(self):
-        print('Performed a click!')
+    def add_click_event(self, event):
+        self.click_data.append(event)
+        self.save_data()
 
-if __name__ == '__main__':
-    click_interval = random.uniform(0.5, 2.0)
-    click_count = random.randint(1, 20)
-    clicker = AutoClicker(click_interval, click_count)
-    clicker.start_clicking()
+    def get_all_clicks(self):
+        return self.click_data
+
+    def clear_click_data(self):
+        self.click_data = []
+        self.save_data()
