@@ -1,34 +1,35 @@
-import json
+import time
+import random
 
-class DataHandler:
-    def __init__(self, data):
-        self.data = data
+class Clicker:
+    def __init__(self, delay=1):
+        self.delay = delay
 
-    def to_json(self):
-        """Convert data to JSON format."""
+    def perform_click(self):
         try:
-            json_data = json.dumps(self.data)
-            return json_data
-        except (TypeError, OverflowError) as e:
-            return f"Error converting to JSON: {str(e)}"
+            # Simulating mouse click action
+            if self.delay < 0:
+                raise ValueError("Delay must be non-negative")
+            print(f"Click performed after {self.delay} seconds.")
+            time.sleep(self.delay)
+        except ValueError as e:
+            print(f"Error: {e}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
 
-    def from_json(self, json_string):
-        """Parse JSON string to dictionary."""
+    def random_clicks(self, count):
         try:
-            parsed_data = json.loads(json_string)
-            return parsed_data
-        except json.JSONDecodeError as e:
-            return f"Error decoding JSON: {str(e)}"
+            if count < 1:
+                raise ValueError("Count must be at least 1")
+            for _ in range(count):
+                self.perform_click()
+                # Randomly determining the next delay between clicks
+                self.delay = random.uniform(0.5, 2.0)
+        except ValueError as e:
+            print(f"Error: {e}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
 
-    def filter_data(self, condition):
-        """Filter data based on a condition function."""
-        if not callable(condition):
-            return "Condition must be a callable function"
-        return [item for item in self.data if condition(item)]
-
-# Example usage:
-# handler = DataHandler([{'name': 'Alice'}, {'name': 'Bob'}, {'name': 'Charlie'}])  
-# json_string = handler.to_json()  
-# print(handler.from_json(json_string))  
-# filtered = handler.filter_data(lambda x: x['name'].startswith('A'))  
-# print(filtered)
+if __name__ == '__main__':
+    clicker = Clicker()
+    clicker.random_clicks(5)
