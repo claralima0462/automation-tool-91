@@ -1,41 +1,24 @@
 import logging
+from logging.handlers import RotatingFileHandler
 
+# Setup logger configuration
 
-def setup_logger(name: str, log_file: str, level: int = logging.INFO) -> logging.Logger:
-    """Create a logger with a file handler and console handler.
+def setup_logger(log_file='app.log', max_bytes=10*1024, backup_count=5):
+    logger = logging.getLogger('MyLogger')
+    logger.setLevel(logging.DEBUG)  # Set the logger to debug level
 
-    Args:
-        name (str): The name of the logger.
-        log_file (str): The file to which logs should be written.
-        level (int): The logging level.
-
-    Returns:
-        logging.Logger: Configured logger instance.
-    """
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
-
-    # Create file handler which logs even debug messages
-    fh = logging.FileHandler(log_file)
-    fh.setLevel(level)
-
-    # Create console handler with a higher log level
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.ERROR)
-
-    # Create formatter and add it to the handlers
+    # Create a rotating file handler
+    handler = RotatingFileHandler(log_file, maxBytes=max_bytes, backupCount=backup_count)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
+    handler.setFormatter(formatter)
 
-    # Add the handlers to the logger
-    logger.addHandler(fh)
-    logger.addHandler(ch)
-
+    # Add the handler to the logger
+    logger.addHandler(handler)
     return logger
 
-
+# Example usage of the logger
 if __name__ == '__main__':
-    log = setup_logger('my_logger', 'app.log')
-    log.info('Logging setup complete.')
-    log.error('This is an error message.')
+    logger = setup_logger()
+    logger.info('Logger is set up and ready to log!')
+    logger.debug('This is a debug message.')
+    logger.error('This is an error message.')
