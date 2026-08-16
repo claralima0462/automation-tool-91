@@ -1,35 +1,38 @@
-import time
-import random
+from time import sleep
+from typing import Callable, Optional
 
-class Clicker:
-    def __init__(self, delay=1):
-        self.delay = delay
+class Autoclicker:
+    def __init__(self, click_interval: float) -> None:
+        """
+        Initialize the Autoclicker with a click interval.
 
-    def perform_click(self):
-        try:
-            # Simulating mouse click action
-            if self.delay < 0:
-                raise ValueError("Delay must be non-negative")
-            print(f"Click performed after {self.delay} seconds.")
-            time.sleep(self.delay)
-        except ValueError as e:
-            print(f"Error: {e}")
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+        :param click_interval: Time in seconds between clicks.
+        """
+        self.click_interval = click_interval
+        self.is_running = False
 
-    def random_clicks(self, count):
-        try:
-            if count < 1:
-                raise ValueError("Count must be at least 1")
-            for _ in range(count):
-                self.perform_click()
-                # Randomly determining the next delay between clicks
-                self.delay = random.uniform(0.5, 2.0)
-        except ValueError as e:
-            print(f"Error: {e}")
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+    def start(self, click_action: Callable[[], None]) -> None:
+        """
+        Start the autoclicker, calling the click action at the specified interval.
 
+        :param click_action: A callable that defines the click action.
+        """
+        self.is_running = True
+        while self.is_running:
+            click_action()
+            sleep(self.click_interval)
+
+    def stop(self) -> None:
+        """
+        Stop the autoclicker.
+        """
+        self.is_running = False
+
+# Example usage
 if __name__ == '__main__':
-    clicker = Clicker()
-    clicker.random_clicks(5)
+    autoclicker = Autoclicker(0.1)
+    def mock_click():
+        print('Click!')
+    autoclicker.start(mock_click)
+    sleep(1)  # Let it run for a second
+    autoclicker.stop()
