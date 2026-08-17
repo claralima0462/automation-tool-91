@@ -1,26 +1,34 @@
-import time
+import json
+from typing import Any, Dict, List
 
-class Processor:
-    def __init__(self):
-        self.click_interval = 1.0  # Default to 1 second
+class AutoClickerDataProcessor:
+    def __init__(self, data: List[Dict[str, Any]]) -> None:
+        self.data = data
 
-    def start_clicking(self, num_clicks):
-        if not self.validate_input(num_clicks):
-            raise ValueError('Invalid number of clicks. Must be a positive integer.')
-        for _ in range(num_clicks):
-            self.perform_click()
-            time.sleep(self.click_interval)
+    def filter_data(self, condition: Dict[str, Any]) -> List[Dict[str, Any]]:
+        filtered_data = [item for item in self.data if all(item.get(k) == v for k, v in condition.items())]
+        return filtered_data
 
-    def perform_click(self):
-        print('Click!')  # Simulate a click in your autoclicker
+    def serialize_data(self) -> str:
+        return json.dumps(self.data, indent=4)
 
-    def validate_input(self, num_clicks):
-        return isinstance(num_clicks, int) and num_clicks > 0
+    def deserialize_data(self, json_string: str) -> None:
+        self.data = json.loads(json_string)
 
-# Example usage
+    def get_summary(self) -> Dict[str, int]:
+        summary = {"total_clicks": len(self.data)}
+        return summary
+
+# Example usage:
 if __name__ == '__main__':
-    processor = Processor()
-    try:
-        processor.start_clicking(5)  # Change this number as needed
-    except ValueError as e:
-        print(e)
+    sample_data = [
+        {"timestamp": 1638847000, "x": 100, "y": 200},
+        {"timestamp": 1638847010, "x": 150, "y": 250},
+    ]
+    processor = AutoClickerDataProcessor(sample_data)
+    filtered = processor.filter_data({"x": 100})
+    summary = processor.get_summary()
+    print(filtered)
+    print(summary)
+    json_output = processor.serialize_data()
+    print(json_output)
