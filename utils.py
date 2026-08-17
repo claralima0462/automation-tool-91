@@ -1,29 +1,27 @@
 import time
+import requests
+from requests.exceptions import RequestException
 
-def delay(seconds: float) -> None:
-    """Pause execution for a specified number of seconds."""
-    time.sleep(seconds)
-
-
-def click_at(x: int, y: int) -> None:
-    """Simulate a mouse click at the given coordinates."""
-    import pyautogui
-    pyautogui.click(x, y)
-
-
-def get_cursor_position() -> tuple[int, int]:
-    """Retrieve the current position of the mouse cursor."""
-    import pyautogui
-    return pyautogui.position()
-
-
-def is_point_within_area(x: int, y: int, area: tuple[int, int, int, int]) -> bool:
-    """Check if the point (x, y) is within the given rectangular area."""
-    area_x, area_y, area_width, area_height = area
-    return area_x <= x <= (area_x + area_width) and area_y <= y <= (area_y + area_height)
-
-
-def perform_click_with_delay(x: int, y: int, delay_time: float) -> None:
-    """Click at the specified coordinates after a delay."""
-    delay(delay_time)
-    click_at(x, y)
+def retry_request(url, max_retries=3, backoff_factor=0.5):
+    """
+    Makes a GET request to the specified URL with retry logic.
+    
+    :param url: URL to make the GET request.
+    :param max_retries: Maximum number of retries before failing.
+    :param backoff_factor: Factor by which to increase wait time between retries.
+    :return: Response object if successful.
+    """
+    tries = 0
+    while tries < max_retries:
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  # Raise an error for bad responses
+            return response
+        except RequestException as e:
+            tries += 1
+            if tries == max_retries:
+                print(f'Failed to fetch {url} after {max_retries} attempts.')
+                raise
+            wait_time = backoff_factor * (2 ** tries)
+            print(f'Retrying {url} in {wait_time:.1f} seconds...')
+            time.sleep(wait_time)
