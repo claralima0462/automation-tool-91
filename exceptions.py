@@ -1,27 +1,22 @@
-class CustomError(Exception):
-    """Base class for other exceptions."""
+class ClickerException(Exception):
+    """Base exception for the autoclicker tool."""
     pass
 
-class ConfigError(CustomError):
-    """Raised when configuration is incorrect."""
-    def __init__(self, message):
-        self.message = message
-        super().__init__(self.message)
+class ConfigurationError(ClickerException):
+    """Raised when there is a configuration issue."""
+    pass
 
-class ClickError(CustomError):
-    """Raised when clicking fails."""
-    def __init__(self, message):
-        self.message = message
-        super().__init__(self.message)
+class InvalidClickRateError(ClickerException):
+    """Raised when the click rate is invalid."""
+    
+    def __init__(self, rate: float) -> None:
+        super().__init__(f"Invalid click rate: {rate}")
+        self.rate = rate
 
-class TimeoutError(CustomError):
-    """Raised when a timeout occurs."""
-    def __init__(self, message='Operation timed out'):
-        self.message = message
-        super().__init__(self.message)
+class ClickerNotReadyError(ClickerException):
+    """Raised when the autoclicker is not ready to start clicking."""
+    pass
 
-class InvalidParameterError(CustomError):
-    """Raised when a parameter is invalid."""
-    def __init__(self, param):
-        self.message = f'Invalid parameter: {param}'
-        super().__init__(self.message)
+class ClickerAlreadyRunningError(ClickerException):
+    """Raised when an attempt is made to start the clicker that is already running."""
+    pass
