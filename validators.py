@@ -1,40 +1,42 @@
 import re
 
-# Validates email format using regex
+def is_valid_click_interval(interval):
+    """
+    Validate the click interval input.
+    :param interval: The interval to validate.
+    :return: True if valid, else False.
+    """
+    return isinstance(interval, (int, float)) and interval > 0
 
-def validate_email(email):
-    email_regex = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-    return re.match(email_regex, email) is not None
 
-# Validates a positive integer
+def is_valid_click_count(count):
+    """
+    Validate the click count input.
+    :param count: The count to validate.
+    :return: True if valid, else False.
+    """
+    return isinstance(count, int) and count > 0
 
-def validate_positive_integer(value):
-    try:
-        ivalue = int(value)
-        return ivalue >= 0
-    except ValueError:
-        return False
 
-# Validates if the input is a non-empty string
+def is_valid_position(position):
+    """
+    Validate the click position input.
+    :param position: A tuple representing (x, y) coordinates.
+    :return: True if valid, else False.
+    """
+    return (isinstance(position, tuple) and len(position) == 2
+            and all(isinstance(coord, int) for coord in position))
 
-def validate_non_empty_string(value):
-    return isinstance(value, str) and bool(value.strip())
 
-# Validates the length of a string
-
-def validate_string_length(value, min_length=1, max_length=255):
-    if not isinstance(value, str):
-        return False
-    length = len(value)
-    return min_length <= length <= max_length
-
-# Consolidate validation checks
-
-def validate_user_input(email, age, name):
-    return (validate_email(email) and
-            validate_positive_integer(age) and
-            validate_non_empty_string(name))
-
-if __name__ == '__main__':
-    print(validate_user_input('test@example.com', '25', 'John Doe'))
-    print(validate_user_input('invalid-email', '25', ''))
+def validate_inputs(click_interval, click_count, click_position):
+    """
+    Validate all inputs before initiating autoclick.
+    :param click_interval: Interval between clicks.
+    :param click_count: Total number of clicks to perform.
+    :param click_position: Coordinates where to perform clicks.
+    :return: A tuple of validation results (interval_valid, count_valid, position_valid).
+    """
+    interval_valid = is_valid_click_interval(click_interval)
+    count_valid = is_valid_click_count(click_count)
+    position_valid = is_valid_position(click_position)
+    return interval_valid, count_valid, position_valid
