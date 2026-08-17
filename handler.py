@@ -1,38 +1,28 @@
-from time import sleep
-from typing import Callable, Optional
+import time
+import threading
 
-class Autoclicker:
-    def __init__(self, click_interval: float) -> None:
-        """
-        Initialize the Autoclicker with a click interval.
+class AutoClicker:
+    def __init__(self, delay):
+        self.delay = delay
+        self.running = False
 
-        :param click_interval: Time in seconds between clicks.
-        """
-        self.click_interval = click_interval
-        self.is_running = False
+    def start(self):
+        self.running = True
+        threading.Thread(target=self._click_loop).start()
 
-    def start(self, click_action: Callable[[], None]) -> None:
-        """
-        Start the autoclicker, calling the click action at the specified interval.
+    def stop(self):
+        self.running = False
 
-        :param click_action: A callable that defines the click action.
-        """
-        self.is_running = True
-        while self.is_running:
-            click_action()
-            sleep(self.click_interval)
+    def _click_loop(self):
+        while self.running:
+            self.perform_click()
+            time.sleep(self.delay)
 
-    def stop(self) -> None:
-        """
-        Stop the autoclicker.
-        """
-        self.is_running = False
+    def perform_click(self):
+        print('Click!')  # Replace with actual click action
 
-# Example usage
 if __name__ == '__main__':
-    autoclicker = Autoclicker(0.1)
-    def mock_click():
-        print('Click!')
-    autoclicker.start(mock_click)
-    sleep(1)  # Let it run for a second
+    autoclicker = AutoClicker(delay=1)
+    autoclicker.start()
+    time.sleep(5)
     autoclicker.stop()
