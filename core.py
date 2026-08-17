@@ -1,27 +1,28 @@
-import json
-import os
-class AutoClickerData:
-    def __init__(self, data_file='click_data.json'):
-        self.data_file = data_file
-        self.click_data = self.load_data()
+import time
+import random
 
-    def load_data(self):
-        if os.path.exists(self.data_file):
-            with open(self.data_file, 'r') as file:
-                return json.load(file)
-        return []
+class AutoClicker:
+    def __init__(self, click_interval=1.0, max_clicks=100):
+        self.click_interval = click_interval
+        self.max_clicks = max_clicks
 
-    def save_data(self):
-        with open(self.data_file, 'w') as file:
-            json.dump(self.click_data, file)
+    def validate_input(self, interval, clicks):
+        if not isinstance(interval, (int, float)) or interval <= 0:
+            raise ValueError('Click interval must be a positive number.')
+        if not isinstance(clicks, int) or clicks <= 0:
+            raise ValueError('Max clicks must be a positive integer.')
 
-    def add_click_event(self, event):
-        self.click_data.append(event)
-        self.save_data()
+    def start_clicking(self):
+        try:
+            self.validate_input(self.click_interval, self.max_clicks)
+            for _ in range(self.max_clicks):
+                print('Click!')
+                time.sleep(self.click_interval)
+        except ValueError as ve:
+            print(f'Input Error: {ve}')
+        except Exception as e:
+            print(f'Unexpected Error: {e}')
 
-    def get_all_clicks(self):
-        return self.click_data
-
-    def clear_click_data(self):
-        self.click_data = []
-        self.save_data()
+if __name__ == '__main__':
+    autoclicker = AutoClicker(0.5, 10)
+    autoclicker.start_clicking()
