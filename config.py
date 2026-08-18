@@ -1,51 +1,34 @@
-from typing import Dict, Any
+import json
 
 class Config:
-    """Configuration manager for the autoclicker tool."""
-    def __init__(self, settings: Dict[str, Any]) -> None:
-        """Initialize the configuration with provided settings.
+    def __init__(self, filepath):
+        self.filepath = filepath
+        self.settings = self.load_config()
 
-        Args:
-            settings (Dict[str, Any]): A dictionary containing configuration settings.
-        """
-        self.settings = settings
+    def load_config(self):
+        try:
+            with open(self.filepath, 'r') as file:
+                return json.load(file)
+        except FileNotFoundError:
+            print(f'Error: Configuration file {self.filepath} not found.')
+            return {}
+        except json.JSONDecodeError:
+            print(f'Error: Configuration file {self.filepath} contains invalid JSON.')
+            return {}
+        except Exception as e:
+            print(f'Unexpected error occurred: {str(e)}')
+            return {}
 
-    def get_setting(self, key: str) -> Any:
-        """Retrieve a setting value by key.
+    def get(self, key, default=None):
+        return self.settings.get(key, default)
 
-        Args:
-            key (str): The key of the setting to retrieve.
-
-        Returns:
-            Any: The value associated with the provided key, or None if not found.
-        """
-        return self.settings.get(key)
-
-    def set_setting(self, key: str, value: Any) -> None:
-        """Set a value for a specific setting key.
-
-        Args:
-            key (str): The key for the setting to set.
-            value (Any): The value to assign to the setting key.
-        """
+    def set(self, key, value):
         self.settings[key] = value
+        self.save_config()
 
-    def load_from_file(self, file_path: str) -> None:
-        """Load settings from a JSON file.
-
-        Args:
-            file_path (str): Path to the JSON file containing settings.
-        """
-        import json
-        with open(file_path, 'r') as f:
-            self.settings = json.load(f)
-
-    def save_to_file(self, file_path: str) -> None:
-        """Save current settings to a JSON file.
-
-        Args:
-            file_path (str): Path to the JSON file where settings will be saved.
-        """
-        import json
-        with open(file_path, 'w') as f:
-            json.dump(self.settings, f, indent=4)
+    def save_config(self):
+        try:
+            with open(self.filepath, 'w') as file:
+                json.dump(self.settings, file, indent=4)
+        except Exception as e:
+            print(f'Error saving configuration: {str(e)}')
