@@ -1,28 +1,35 @@
 import time
-import random
+import threading
 
 class AutoClicker:
-    def __init__(self, click_interval=1.0, max_clicks=100):
+    def __init__(self, click_interval=0.1):
         self.click_interval = click_interval
-        self.max_clicks = max_clicks
+        self.running = False
+        self.thread = None
 
-    def validate_input(self, interval, clicks):
-        if not isinstance(interval, (int, float)) or interval <= 0:
-            raise ValueError('Click interval must be a positive number.')
-        if not isinstance(clicks, int) or clicks <= 0:
-            raise ValueError('Max clicks must be a positive integer.')
+    def start(self):
+        if not self.running:
+            self.running = True
+            self.thread = threading.Thread(target=self._click_loop)
+            self.thread.start()
 
-    def start_clicking(self):
-        try:
-            self.validate_input(self.click_interval, self.max_clicks)
-            for _ in range(self.max_clicks):
-                print('Click!')
-                time.sleep(self.click_interval)
-        except ValueError as ve:
-            print(f'Input Error: {ve}')
-        except Exception as e:
-            print(f'Unexpected Error: {e}')
+    def stop(self):
+        self.running = False
+        if self.thread:
+            self.thread.join()
 
+    def _click_loop(self):
+        while self.running:
+            self.perform_click()
+            time.sleep(self.click_interval)
+
+    def perform_click(self):
+        # This is a placeholder for the click action
+        print("Click!")  # Replace with actual clicking logic
+
+# Example usage
 if __name__ == '__main__':
-    autoclicker = AutoClicker(0.5, 10)
-    autoclicker.start_clicking()
+    clicker = AutoClicker(click_interval=0.05)
+    clicker.start()
+    time.sleep(1)
+    clicker.stop()
