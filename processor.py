@@ -1,32 +1,27 @@
 import time
-from threading import Thread
-from pynput.mouse import Button, Controller
+import requests
+from requests.exceptions import RequestException
 
-class AutoClicker:
-    def __init__(self, click_interval=0.1):
-        self.click_interval = click_interval
-        self.mouse_controller = Controller()
-        self.running = False
+def retry_request(url, max_retries=3, delay=2):
+    attempts = 0
+    while attempts < max_retries:
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            return response.json()  # Assuming the response is JSON
+        except RequestException as e:
+            attempts += 1
+            print(f"Attempt {attempts} failed: {e}")
+            if attempts < max_retries:
+                time.sleep(delay)
+            else:
+                print("All attempts failed.")
+                raise  # Reraise the last exception
 
-    def start_clicking(self):
-        self.running = True
-        while self.running:
-            self.mouse_controller.click(Button.left)
-            time.sleep(self.click_interval)
-
-    def stop_clicking(self):
-        self.running = False
-
-    def run(self):
-        click_thread = Thread(target=self.start_clicking)
-        click_thread.start()
-
+# Example usage of the retry_request function:
 if __name__ == '__main__':
-    clicker = AutoClicker(click_interval=0.5)
     try:
-        clicker.run()
-        # Run for 10 seconds
-        time.sleep(10)
-    finally:
-        clicker.stop_clicking()  
-        click_thread.join()  # Ensure clicking stops before exiting
+        data = retry_request('https://api.example.com/data')
+        print(data)
+    except Exception as ex:
+        print(f"Failed to fetch data: {ex}")
