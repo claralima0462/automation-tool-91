@@ -1,34 +1,32 @@
-import json
-from typing import Any, Dict, List
+import time
+from threading import Thread
+from pynput.mouse import Button, Controller
 
-class AutoClickerDataProcessor:
-    def __init__(self, data: List[Dict[str, Any]]) -> None:
-        self.data = data
+class AutoClicker:
+    def __init__(self, click_interval=0.1):
+        self.click_interval = click_interval
+        self.mouse_controller = Controller()
+        self.running = False
 
-    def filter_data(self, condition: Dict[str, Any]) -> List[Dict[str, Any]]:
-        filtered_data = [item for item in self.data if all(item.get(k) == v for k, v in condition.items())]
-        return filtered_data
+    def start_clicking(self):
+        self.running = True
+        while self.running:
+            self.mouse_controller.click(Button.left)
+            time.sleep(self.click_interval)
 
-    def serialize_data(self) -> str:
-        return json.dumps(self.data, indent=4)
+    def stop_clicking(self):
+        self.running = False
 
-    def deserialize_data(self, json_string: str) -> None:
-        self.data = json.loads(json_string)
+    def run(self):
+        click_thread = Thread(target=self.start_clicking)
+        click_thread.start()
 
-    def get_summary(self) -> Dict[str, int]:
-        summary = {"total_clicks": len(self.data)}
-        return summary
-
-# Example usage:
 if __name__ == '__main__':
-    sample_data = [
-        {"timestamp": 1638847000, "x": 100, "y": 200},
-        {"timestamp": 1638847010, "x": 150, "y": 250},
-    ]
-    processor = AutoClickerDataProcessor(sample_data)
-    filtered = processor.filter_data({"x": 100})
-    summary = processor.get_summary()
-    print(filtered)
-    print(summary)
-    json_output = processor.serialize_data()
-    print(json_output)
+    clicker = AutoClicker(click_interval=0.5)
+    try:
+        clicker.run()
+        # Run for 10 seconds
+        time.sleep(10)
+    finally:
+        clicker.stop_clicking()  
+        click_thread.join()  # Ensure clicking stops before exiting
