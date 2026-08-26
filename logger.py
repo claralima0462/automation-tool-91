@@ -2,54 +2,41 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 
-# Logger setup for automation-tool-91 autoclicker
-# Implements rotating logs to manage file size
-
-def setup_logger(name="autoclicker", log_dir="logs", log_file="automation.log",
-                 max_bytes=5*1024*1024, backup_count=3, level=logging.INFO):
-    """Configure and return a logger with file rotation."""
-
-    # Ensure the log directory exists
+def setup_logger(name: str = "autoclicker") -> logging.Logger:
+    """Configure and return a rotating file logger for automation-tool-91."""
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+    
+    # Prevent duplicate handlers if setup is called multiple times
+    if logger.handlers:
+        return logger
+        
+    log_dir = "logs"
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
-
-    log_path = os.path.join(log_dir, log_file)
-
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
-
-    # Prevent duplicate handlers on repeated calls
-    if logger.hasHandlers():
-        logger.handlers.clear()
-
-    # Rotating file handler configuration
+        
+    log_file = os.path.join(log_dir, f"{name}.log")
+    
+    # Setup rotating file handler (5MB per file, max 3 backup files)
     file_handler = RotatingFileHandler(
-        log_path, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8"
+        log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
     )
     file_handler.setLevel(logging.DEBUG)
-
-    file_formatter = logging.Formatter(
-        "%(asctime)s [%(levelname)s] %(name)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
-    )
-    file_handler.setFormatter(file_formatter)
-    logger.addHandler(file_handler)
-
-    # Console handler for immediate feedback
+    
+    # Setup console handler for real-time monitoring
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(level)
-
-    console_formatter = logging.Formatter("%(levelname)s: %(message)s")
-    console_handler.setFormatter(console_formatter)
+    console_handler.setLevel(logging.INFO)
+    
+    # Define format and apply to handlers
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+    
+    logger.addHandler(file_handler)
     logger.addHandler(console_handler)
-
-    logger.info("Logger initialized with rotation")
+    
     return logger
 
-if __name__ == "__main__":
-    # Test the logger setup
-    logger = setup_logger()
-    logger.debug("This debug log goes to file only")
-    logger.info("Autoclicker started")
-    logger.warning("Low memory warning")
-    for i in range(10):
-        logger.info(f"Click event number {i}")
+logger = setup_logger()
