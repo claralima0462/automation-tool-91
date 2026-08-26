@@ -1,42 +1,46 @@
 import re
 
-def is_valid_click_interval(interval):
-    """
-    Validate the click interval input.
-    :param interval: The interval to validate.
-    :return: True if valid, else False.
-    """
-    return isinstance(interval, (int, float)) and interval > 0
+class ClickConfigValidator:
+    """Validates autoclicker configuration parameters."""
+    
+    @staticmethod
+    TOLERANCE_MIN = 1
+    TOLERANCE_MAX = 1000
+    
+    @classmethod
+    def validate_interval(cls, interval: float) -> float:
+        """Ensure click interval is safe and positive."""
+        try:
+            val = float(interval)
+        except (TypeError, ValueError):
+            raise ValueError("Interval must be a numeric value.")
+            
+        if val < 0.01:
+            raise ValueError("Interval cannot be less than 10ms for safety.")
+        return val
 
+    @classmethod
+    def validate_coordinates(cls, x: int, y: int) -> tuple[int, int]:
+        """Ensure screen coordinates are within integer bounds."""
+        try:
+            coord_x = int(x)
+            coord_y = int(y)
+        except (TypeError, ValueError):
+            raise ValueError("Coordinates must be integers.")
+            
+        if coord_x < 0 or coord_y < 0:
+            raise ValueError("Coordinates cannot be negative.")
+            
+        return coord_x, coord_y
 
-def is_valid_click_count(count):
-    """
-    Validate the click count input.
-    :param count: The count to validate.
-    :return: True if valid, else False.
-    """
-    return isinstance(count, int) and count > 0
-
-
-def is_valid_position(position):
-    """
-    Validate the click position input.
-    :param position: A tuple representing (x, y) coordinates.
-    :return: True if valid, else False.
-    """
-    return (isinstance(position, tuple) and len(position) == 2
-            and all(isinstance(coord, int) for coord in position))
-
-
-def validate_inputs(click_interval, click_count, click_position):
-    """
-    Validate all inputs before initiating autoclick.
-    :param click_interval: Interval between clicks.
-    :param click_count: Total number of clicks to perform.
-    :param click_position: Coordinates where to perform clicks.
-    :return: A tuple of validation results (interval_valid, count_valid, position_valid).
-    """
-    interval_valid = is_valid_click_interval(click_interval)
-    count_valid = is_valid_click_count(click_count)
-    position_valid = is_valid_position(click_position)
-    return interval_valid, count_valid, position_valid
+    @classmethod
+    def validate_hotkey(cls, hotkey: str) -> str:
+        """Validate hotkey string format."""
+        if not isinstance(hotkey, str) or not hotkey.strip():
+            raise ValueError("Hotkey must be a non-empty string.")
+            
+        cleaned = hotkey.strip().lower()
+        if not re.match(r'^[a-z0-9_\+\-]+$', cleaned):
+            raise ValueError(f"Invalid hotkey format: {hotkey}")
+            
+        return cleaned
