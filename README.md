@@ -1,51 +1,69 @@
-# Automation Tool 91
+# automation-tool-91
 
-Automation Tool 91 is a powerful Python-based utility designed to streamline repetitive tasks and improve productivity. This tool offers a suite of automation functionalities that can easily be customized to fit a variety of workflows, making it ideal for developers, data analysts, and anyone seeking to enhance their efficiency.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
 
-## Features
+A lightweight, high-performance desktop automation utility built in Python. Designed for repetitive clicking tasks, it provides precise interval control and coordinate mapping with minimal resource overhead.
 
-- **Task Scheduling**: Schedule and automate tasks to run at specified times or intervals, utilizing cron-like syntax for flexibility.
-- **Data Manipulation**: Effortlessly manipulate files and data formats including CSV, JSON, and Excel, allowing for bulk operations on datasets.
-- **Web Scraping**: Implement web scraping techniques to extract information from websites, complete with support for handling pagination and dynamic content.
-- **Error Logging**: Integrated error logging helps track issues during automation processes, making troubleshooting simpler and enhancing reliability.
+---
 
-## Installation
+### Features
 
-To get started with Automation Tool 91, you need to have Python installed on your machine. The following commands will guide you through the installation process:
+* **High-Precision Timing:** Executes mouse clicks at exact millisecond intervals using optimized system-level thread sleeping.
+* **Smart Coordinate Locking:** Capture and lock onto specific screen (X, Y) coordinates to prevent drift during long execution runs.
+* **Emergency Safety Killswitch:** Instantly halt all automated actions by simply slamming your mouse cursor into any corner of the screen.
+* **Configurable Profiles:** Save and load custom click sequences, delays, and repeat counts for different workflows.
+
+---
+
+### Installation
+
+Ensure you have Python 3.8 or higher installed on your system. 
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Developer/automation-tool-91.git
+   cd automation-tool-91
+   ```
+
+2. Install the required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+---
+
+### Usage
+
+Run the tool from your terminal to launch the interactive CLI configuration:
 
 ```bash
-# Clone the repository
-git clone https://github.com/Developer/automation-tool-91.git
-
-# Navigate to the project directory
-cd automation-tool-91
-
-# Install the required dependencies
-pip install -r requirements.txt
+python main.py
 ```
 
-## Basic Usage Example
+#### Quick Script Example
 
-After installation, you can use Automation Tool 91 to automate a simple file backup. Here's a quick example:
+You can also import the core engine into your own Python scripts for advanced automation workflows:
 
 ```python
-from automation_tool import Backup
+from engine import AutoClicker
 
-# Initialize the Backup class
-backup = Backup(source_directory='/path/to/source', destination_directory='/path/to/destination')
+# Initialize clicker with a 50ms delay and right-click action
+bot = AutoClicker(delay=0.05, button="right")
 
-# Schedule the backup to run daily at 2 AM
-backup.schedule(cron_time='0 2 * * *')
+# Target specific screen coordinates and run for 500 iterations
+bot.set_position(x=500, y=300)
+bot.start(clicks=500)
 ```
 
-This setup will ensure your files are backed up every day at 2 AM, providing peace of mind and security.
+---
 
-## License
+### Contributing
 
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
-Feel free to use, modify, and contribute to this project under the terms provided in the MIT License. For details, see the LICENSE file.
+---
 
---- 
+### License
 
-Explore the full potential of automation with Automation Tool 91 today!
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
