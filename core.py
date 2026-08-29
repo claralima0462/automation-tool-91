@@ -1,71 +1,63 @@
 import time
-import threading
-from typing import Optional, Callable
+from typing import Optional
 
-class Core:
-    """Core module for autoclicker with performance optimizations."""
+import pyautogui
 
-    def __init__(self, clicks_per_second: float = 10.0, max_duration: Optional[float] = None):
-        self.clicks_per_second = clicks_per_second
-        self.max_duration = max_duration
-        self._running = False
-        self._thread: Optional[threading.Thread] = None
-        self._click_count = 0
-        self._on_click: Optional[Callable] = None
-        # Precompute interval for performance
-        self._interval = 1.0 / clicks_per_second if clicks_per_second > 0 else 0.1
+class AutoClickerCore:
+    """Core class handling the autoclicker operations."""
 
-    def set_click_callback(self, callback: Callable[[], None]):
-        self._on_click = callback
+    def __init__(self, interval: float = 1.0, button: str = "left") -> None:
+        """Initialize with click interval and button.
 
-    def start(self):
-        if self._running:
-            return
-        self._running = True
-        self._click_count = 0
-        self._thread = threading.Thread(target=self._optimized_loop, daemon=True)
-        self._thread.start()
+        Args:
+            interval: Seconds between consecutive clicks. Must be positive.
+            button: Mouse button for clicking. Defaults to 'left'.
+        """
+        if interval <= 0:
+            raise ValueError("Interval must be greater than zero")
+        self.interval: float = interval
+        self.button: str = button
+        self.is_running: bool = False
 
-    def _optimized_loop(self):
-        start_time = time.perf_counter()
-        last_click_time = start_time
-        while self._running:
-            current_time = time.perf_counter()
-            if self.max_duration is not None and (current_time - start_time) >= self.max_duration:
-                self._running = False
-                break
-            time_since_last = current_time - last_click_time
-            if time_since_last >= self._interval:
-                self._perform_click()
-                last_click_time = current_time
-            else:
-                # Minimal sleep to lower CPU usage while maintaining accuracy
-                sleep_time = self._interval - time_since_last
-                time.sleep(max(0, min(sleep_time, 0.01)))
+    def start_clicking(self, duration: Optional[float] = None) -> None:
+        """Begin the autoclicking process.
 
-    def _perform_click(self):
-        self._click_count += 1
-        if self._on_click is not None:
-            self._on_click()
+        Args:
+            duration: Optional total duration in seconds. If not provided,
+                      continues until stop is called.
+        """
+        self.is_running = True
+        start_time: float = time.time()
+        while self.is_running:
+            # Execute the click action
+            pyautogui.click(button=self.button)
+            time.sleep(self.interval)
+            if duration is not None:
+                elapsed: float = time.time() - start_time
+                if elapsed >= duration:
+                    self.stop_clicking()
+                    break
 
-    def stop(self):
-        self._running = False
-        if self._thread is not None and self._thread.is_alive():
-            self._thread.join(timeout=2.0)
+    def stop_clicking(self) -> None:
+        """Stop the ongoing clicking operation."""
+        self.is_running = False
 
-    def get_click_count(self) -> int:
-        return self._click_count
+    def get_status(self) -> bool:
+        """Return current running status.
 
-    def is_running(self) -> bool:
-        return self._running
+        Returns:
+            True if clicking is active, False otherwise.
+        """
+        return self.is_running
 
-if __name__ == "__main__":
-    def example_click():
-        print("Click executed")
+# Utility function for direct use
+def run_autoclicker(interval: float, duration: Optional[float] = None, button: str = "left") -> None:
+    """Run autoclicker using the core class.
 
-    core = Core(clicks_per_second=20.0, max_duration=1.0)
-    core.set_click_callback(example_click)
-    core.start()
-    time.sleep(1.5)
-    core.stop()
-    print(f"Total optimized clicks: {core.get_click_count()}")
+    Args:
+        interval: Click interval in seconds.
+        duration: Optional run duration.
+        button: Mouse button to click.
+    """
+    core = AutoClickerCore(interval=interval, button=button)
+    core.start_clicking(duration=duration)
