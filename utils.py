@@ -1,69 +1,74 @@
-"""Utility functions for autoclicker data handling."""
-
 import json
-import time
-from datetime import datetime
+import os
 from typing import List, Dict, Any, Optional
 
-def save_data(data: List[Dict[str, Any]], filename: str = "autoclicker_data.json") -> bool:
-    """Save autoclicker click data to a JSON file."""
+def load_click_data(filepath: str) -> Optional[List[Dict[str, Any]]]:
+    """Load click positions and delays from JSON file."""
+    if not os.path.exists(filepath):
+        return None
     try:
-        with open(filename, 'w') as f:
-            json.dump(data, f, indent=2)
+        with open(filepath, 'r') as file:
+            data = json.load(file)
+        if validate_click_data(data):
+            return data
+        return None
+    except (json.JSONDecodeError, IOError):
+        return None
+
+def save_click_data(filepath: str, clicks: List[Dict[str, Any]]) -> bool:
+    """Save list of click data to JSON file."""
+    if not validate_click_data(clicks):
+        return False
+    try:
+        with open(filepath, 'w') as file:
+            json.dump(clicks, file, indent=4)
         return True
-    except (IOError, TypeError) as e:
-        print(f"Failed to save data: {e}")
+    except IOError:
         return False
 
-def load_data(filename: str = "autoclicker_data.json") -> List[Dict[str, Any]]:
-    """Load autoclicker click data from a JSON file."""
-    try:
-        with open(filename, 'r') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return []
-    except (IOError, json.JSONDecodeError) as e:
-        print(f"Failed to load data: {e}")
-        return []
-
-def record_click(data: List[Dict[str, Any]], x: int, y: int, interval: Optional[float] = None) -> List[Dict[str, Any]]:
-    """Record a new click event with position and timestamp."""
-    click_event = {
-        "timestamp": time.time(),
-        "datetime": datetime.now().isoformat(),
-        "position": {"x": x, "y": y},
-        "interval": interval
-    }
-    data.append(click_event)
-    return data
-
-def calculate_statistics(data: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Calculate basic statistics from click data."""
-    if not data:
-        return {"total_clicks": 0, "average_interval": 0.0, "duration": 0.0}
-
-    total_clicks = len(data)
-    timestamps = [event["timestamp"] for event in data]
-    intervals = [timestamps[i] - timestamps[i-1] for i in range(1, len(timestamps))]
-    avg_interval = sum(intervals) / len(intervals) if intervals else 0.0
-    duration = timestamps[-1] - timestamps[0] if len(timestamps) > 1 else 0.0
-
-    return {
-        "total_clicks": total_clicks,
-        "average_interval": round(avg_interval, 4),
-        "duration": round(duration, 2),
-        "clicks_per_second": round(total_clicks / duration, 2) if duration > 0 else 0.0
-    }
-
-def export_to_csv(data: List[Dict[str, Any]], filename: str = "clicks.csv") -> bool:
-    """Export click data to a simple CSV file."""
-    try:
-        with open(filename, 'w') as f:
-            f.write("timestamp,datetime,x,y,interval\n")
-            for event in data:
-                pos = event["position"]
-                f.write(f"{event['timestamp']},{event['datetime']},{pos['x']},{pos['y']},{event.get('interval', '')}\n")
-        return True
-    except IOError as e:
-        print(f"Failed to export CSV: {e}")
+def validate_click_data(clicks: List[Dict[str, Any]]) -> bool:
+    """Check if click data has required fields with correct types."""
+    if not isinstance(clicks, list):
         return False
+    required = {'x', 'y', 'delay'}
+    for item in clicks:
+        if not isinstance(item, dict):
+            return False
+        if not required.issubset(set(item.keys())):
+            return False
+        if not (isinstance(item['x'], (int, float)) and
+                isinstance(item['y'], (int, float)) and
+                isinstance(item['delay'], (int, float))):
+            return False
+        if item['delay'] < 0:
+            return False
+    return True
+
+def add_click(clicks: List[Dict[str, Any]], x: float, y: float, delay: float) -> List[Dict[str, Any]]:
+    """Add a new click to the list if valid."""
+    new_click = {'x': x, 'y': y, 'delay': delay}
+    if validate_click_data([new_click]):
+        clicks.append(new_click)
+    return clicks
+
+def get_click_statistics(clicks: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Return statistics like count, average delay, min/max positions."""
+    if not clicks:
+        return {'count': 0, 'avg_delay': 0, 'total_delay': 0}
+    delays = [c['delay'] for c in clicks]
+    xs = [c['x'] for c in clicks]
+    ys = [c['y'] for c in clicks]
+    stats = {
+        'count': len(clicks),
+        'avg_delay': sum(delays) / len(delays),
+        'total_delay': sum(delays),
+        'min_x': min(xs),
+        'max_x': max(xs),
+        'min_y': min(ys),
+        'max_y': max(ys)
+    }
+    return stats
+
+def filter_clicks(clicks: List[Dict[str, Any]], min_delay: float = 0.0) -> List[Dict[str, Any]]:
+    """Return clicks with delay at least min_delay."""
+    return [c for c in clicks if c['delay'] >= min_delay]
