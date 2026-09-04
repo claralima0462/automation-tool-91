@@ -1,46 +1,41 @@
-import re
+from typing import Union, Tuple
 
-class ClickConfigValidator:
-    """Validates autoclicker configuration parameters."""
-    
-    @staticmethod
-    TOLERANCE_MIN = 1
-    TOLERANCE_MAX = 1000
-    
-    @classmethod
-    def validate_interval(cls, interval: float) -> float:
-        """Ensure click interval is safe and positive."""
-        try:
-            val = float(interval)
-        except (TypeError, ValueError):
-            raise ValueError("Interval must be a numeric value.")
-            
-        if val < 0.01:
-            raise ValueError("Interval cannot be less than 10ms for safety.")
-        return val
+def validate_coordinates(x: int, y: int) -> bool:
+    """Verify that screen coordinates are within non-negative bounds.
 
-    @classmethod
-    def validate_coordinates(cls, x: int, y: int) -> tuple[int, int]:
-        """Ensure screen coordinates are within integer bounds."""
-        try:
-            coord_x = int(x)
-            coord_y = int(y)
-        except (TypeError, ValueError):
-            raise ValueError("Coordinates must be integers.")
-            
-        if coord_x < 0 or coord_y < 0:
-            raise ValueError("Coordinates cannot be negative.")
-            
-        return coord_x, coord_y
+    Args:
+        x: The horizontal screen position.
+        y: The vertical screen position.
 
-    @classmethod
-    def validate_hotkey(cls, hotkey: str) -> str:
-        """Validate hotkey string format."""
-        if not isinstance(hotkey, str) or not hotkey.strip():
-            raise ValueError("Hotkey must be a non-empty string.")
-            
-        cleaned = hotkey.strip().lower()
-        if not re.match(r'^[a-z0-9_\+\-]+$', cleaned):
-            raise ValueError(f"Invalid hotkey format: {hotkey}")
-            
-        return cleaned
+    Returns:
+        bool: True if coordinates are valid, False otherwise.
+    """
+    return x >= 0 and y >= 0
+
+def validate_interval(interval: Union[int, float]) -> bool:
+    """Ensure the click interval is a positive value to prevent system freeze.
+
+    Args:
+        interval: Time in seconds between clicks.
+
+    Returns:
+        bool: True if interval is greater than zero.
+    """
+    return isinstance(interval, (int, float)) and interval > 0
+
+def sanitize_input(raw_data: Tuple[str, str]) -> Tuple[int, int]:
+    """Convert raw string input from user interface into integer coordinates.
+
+    Args:
+        raw_data: A tuple of two strings containing numeric characters.
+
+    Returns:
+        Tuple[int, int]: Sanitized integer coordinates.
+
+    Raises:
+        ValueError: If input strings are not numeric.
+    """
+    try:
+        return int(raw_data[0]), int(raw_data[1])
+    except (ValueError, TypeError):
+        return 0, 0
