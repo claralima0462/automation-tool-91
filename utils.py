@@ -1,33 +1,34 @@
-import random
-import time
+import json
+import os
+from typing import Dict, Any
 
+def load_click_settings(filepath: str) -> Dict[str, Any]:
+    """Loads autoclicker configuration from a local JSON file."""
+    default_settings = {
+        "interval": 0.1,
+        "button": "left",
+        "clicks": 1
+    }
 
-def calculate_jitter(x: int, y: int, max_jitter: int = 5) -> tuple:
-    """Adds a small random offset to coordinates to mimic human behavior."""
-    if max_jitter <= 0:
-        return x, y
-    jitter_x = random.randint(-max_jitter, max_jitter)
-    jitter_y = random.randint(-max_jitter, max_jitter)
-    return x + jitter_x, y + jitter_y
+    if not os.path.exists(filepath):
+        return default_settings
 
-
-def get_random_sleep(base_interval: float, variance: float = 0.1) -> float:
-    """Calculates a randomized sleep duration based on a base interval."""
-    if variance <= 0:
-        return max(0.0, base_interval)
-    min_val = max(0.0, base_interval - variance)
-    max_val = base_interval + variance
-    return random.uniform(min_val, max_val)
-
-
-def parse_duration(duration_str: str) -> float:
-    """Parses basic duration strings like '500ms' or '2s' to seconds."""
-    clean_str = duration_str.strip().lower()
     try:
-        if clean_str.endswith("ms"):
-            return float(clean_str[:-2]) / 1000.0
-        if clean_str.endswith("s"):
-            return float(clean_str[:-1])
-        return float(clean_str)
-    except ValueError:
-        raise ValueError(f"Invalid duration format: {duration_str}")
+        with open(filepath, 'r') as f:
+            data = json.load(f)
+            return {**default_settings, **data}
+    except (json.JSONDecodeError, IOError):
+        return default_settings
+
+def save_click_settings(filepath: str, settings: Dict[str, Any]) -> bool:
+    """Persists current clicker configuration to a JSON file."""
+    try:
+        with open(filepath, 'w') as f:
+            json.dump(settings, f, indent=4)
+        return True
+    except IOError:
+        return False
+
+def validate_interval(interval: float) -> float:
+    """Ensures click interval stays within safe operational bounds."""
+    return max(0.01, min(interval, 60.0))
