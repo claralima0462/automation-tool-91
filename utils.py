@@ -1,34 +1,49 @@
-import json
-import os
-from typing import Dict, Any
+import random
+import time
+from typing import Tuple, Optional
 
-def load_click_settings(filepath: str) -> Dict[str, Any]:
-    """Loads autoclicker configuration from a local JSON file."""
-    default_settings = {
-        "interval": 0.1,
-        "button": "left",
-        "clicks": 1
-    }
 
-    if not os.path.exists(filepath):
-        return default_settings
-
+def parse_coordinates(coord_str: str) -> Optional[Tuple[int, int]]:
+    """Parse string representation of coordinates (e.g. '100,200') into an integer tuple."""
+    if not coord_str or "," not in coord_str:
+        return None
     try:
-        with open(filepath, 'r') as f:
-            data = json.load(f)
-            return {**default_settings, **data}
-    except (json.JSONDecodeError, IOError):
-        return default_settings
+        x_str, y_str = coord_str.split(",", 1)
+        return int(x_str.strip()), int(y_str.strip())
+    except ValueError:
+        return None
 
-def save_click_settings(filepath: str, settings: Dict[str, Any]) -> bool:
-    """Persists current clicker configuration to a JSON file."""
-    try:
-        with open(filepath, 'w') as f:
-            json.dump(settings, f, indent=4)
-        return True
-    except IOError:
-        return False
 
-def validate_interval(interval: float) -> float:
-    """Ensures click interval stays within safe operational bounds."""
-    return max(0.01, min(interval, 60.0))
+def calculate_jitter_delay(base_delay: float, jitter_percent: float = 0.1) -> float:
+    """Calculate a randomized delay interval to simulate human clicking variance."""
+    if base_delay <= 0:
+        return 0.0
+    variance = base_delay * max(0.0, min(jitter_percent, 1.0))
+    return max(0.001, base_delay + random.uniform(-variance, variance))
+
+
+def format_duration(seconds: float) -> str:
+    """Format total seconds into a readable time string (e.g., '1h 15m 30s')."""
+    if seconds < 0:
+        return "0s"
+    mins, secs = divmod(int(seconds), 60)
+    hrs, mins = divmod(mins, 60)
+
+    parts = []
+    if hrs > 0:
+        parts.append(f"{hrs}h")
+    if mins > 0:
+        parts.append(f"{mins}m")
+    if secs > 0 or not parts:
+        parts.append(f"{secs}s")
+
+    return " ".join(parts)
+
+
+def safe_sleep(duration: float, step: float = 0.05) -> bool:
+    """Sleep in small intervals to keep the thread responsive."""
+    start_time = time.time()
+    while time.time() - start_time < duration:
+        remaining = duration - (time.time() - start_time)
+        time.sleep(min(step, remaining))
+    return True
