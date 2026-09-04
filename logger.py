@@ -1,57 +1,34 @@
 import logging
-from typing import Optional
+from logging.handlers import RotatingFileHandler
+import os
 
-class AutoClickerLogger:
-    """Logger for autoclicker events with type annotations."""
+def setup_logger(name: str = 'automation_tool_91', log_file: str = 'app.log') -> logging.Logger:
+    """Configures a rotating file logger for the application."""
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.INFO)
 
-    def __init__(self, log_file: str = "autoclicker.log", level: int = logging.INFO) -> None:
-        """Set up logger with file and console output.
-        Args:
-            log_file: Log file path.
-            level: Logging level.
-        """
-        self.logger = logging.getLogger("autoclicker")
-        self.logger.setLevel(level)
-        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-        # File handler
-        fh = logging.FileHandler(log_file)
-        fh.setFormatter(formatter)
-        self.logger.addHandler(fh)
-        # Console handler
-        ch = logging.StreamHandler()
-        ch.setFormatter(formatter)
-        self.logger.addHandler(ch)
+    # Prevent duplicate handlers if re-initialized
+    if not logger.handlers:
+        # Rotating file handler: 5MB per file, keep 3 backup files
+        handler = RotatingFileHandler(
+            log_file, 
+            maxBytes=5 * 1024 * 1024, 
+            backupCount=3
+        )
+        
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        handler.setFormatter(formatter)
+        
+        logger.addHandler(handler)
+        
+        # Optional: stream to console for debugging
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
 
-    def log_click(self, x: int, y: int, button: str = "left") -> None:
-        """Log click at position.
-        Args:
-            x: X position.
-            y: Y position.
-            button: Button name.
-        """
-        self.logger.info(f"Click at ({x},{y}) button={button}")
+    return logger
 
-    def log_start(self, interval: float) -> None:
-        """Log automation start.
-        Args:
-            interval: Seconds between clicks.
-        """
-        self.logger.info(f"Started with interval {interval}")
-
-    def log_stop(self, clicks: int) -> None:
-        """Log automation stop.
-        Args:
-            clicks: Clicks performed.
-        """
-        self.logger.info(f"Stopped after {clicks} clicks")
-
-    def log_error(self, msg: str, exc: Optional[Exception] = None) -> None:
-        """Log error.
-        Args:
-            msg: Error message.
-            exc: Optional exception.
-        """
-        if exc:
-            self.logger.error(f"{msg} - {exc}")
-        else:
-            self.logger.error(msg)
+# Instance for global application usage
+logger = setup_logger()
