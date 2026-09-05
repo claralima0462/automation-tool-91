@@ -1,27 +1,31 @@
 import time
-import requests
-from requests.exceptions import RequestException
+import pyautogui
+from typing import Tuple, Optional
 
-def retry_request(url, max_retries=3, delay=2):
-    attempts = 0
-    while attempts < max_retries:
+class ClickProcessor:
+    """Handles automated clicking sequences based on coordinate input."""
+
+    def __init__(self, interval: float = 0.5) -> None:
+        """Initializes processor with delay between clicks."""
+        self.interval: float = interval
+
+    def perform_click(self, x: int, y: int) -> bool:
+        """Executes a single mouse click at specified coordinates."""
         try:
-            response = requests.get(url)
-            response.raise_for_status()
-            return response.json()  # Assuming the response is JSON
-        except RequestException as e:
-            attempts += 1
-            print(f"Attempt {attempts} failed: {e}")
-            if attempts < max_retries:
-                time.sleep(delay)
-            else:
-                print("All attempts failed.")
-                raise  # Reraise the last exception
+            pyautogui.click(x=x, y=y)
+            time.sleep(self.interval)
+            return True
+        except (pyautogui.FailSafeException, pyautogui.PyAutoGUIException):
+            return False
 
-# Example usage of the retry_request function:
-if __name__ == '__main__':
-    try:
-        data = retry_request('https://api.example.com/data')
-        print(data)
-    except Exception as ex:
-        print(f"Failed to fetch data: {ex}")
+    def run_sequence(self, coordinates: list[Tuple[int, int]], loops: int = 1) -> None:
+        """Iterates through a list of coordinates for a set number of loops."""
+        for _ in range(loops):
+            for x, y in coordinates:
+                if not self.perform_click(x, y):
+                    break
+
+    def update_interval(self, new_interval: float) -> None:
+        """Modifies the delay between click events."""
+        if new_interval >= 0:
+            self.interval = new_interval
