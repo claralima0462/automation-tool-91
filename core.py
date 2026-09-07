@@ -1,56 +1,56 @@
-import time
 import threading
-from typing import Optional, Dict
+import time
+from typing import Callable, Optional
 
-# Core module with performance optimizations for autoclicker
-class CoreAutoClicker:
-    def __init__(self, click_interval: float = 0.05):
-        self.click_interval = click_interval
-        self.is_running = False
-        self.click_count = 0
-        self.start_time: Optional[float] = None
+class AutoClicker:
+    """Core autoclicker engine managing the clicking thread and state."""
+    
+    def __init__(self, delay: float = 0.1, click_func: Optional[Callable[[], None]] = None) -> None:
+        self.delay = delay
+        self.click_func = click_func or self._default_click
+        self._running = False
         self._thread: Optional[threading.Thread] = None
+        self._lock = threading.Lock()
 
-    def start_clicking(self, x: int = 100, y: int = 100):
-        if self.is_running:
-            return
-        self.is_running = True
-        self.click_count = 0
-        self.start_time = time.perf_counter()
-        self._thread = threading.Thread(target=self._optimized_click_loop, args=(x, y))
-        self._thread.daemon = True
-        self._thread.start()
+    def _default_click(self) -> None:
+        """Default click action placeholder when no controller is injected."""
+        pass
 
-    def _optimized_click_loop(self, x: int, y: int):
-        # Use local variables to optimize attribute access in loop
-        interval = self.click_interval
-        count = 0
-        last_tick = time.perf_counter()
-        while self.is_running:
-            count += 1
-            self.click_count = count
-            current = time.perf_counter()
-            elapsed = current - last_tick
-            if elapsed < interval:
-                time.sleep(interval - elapsed)
-            last_tick = time.perf_counter()
+    def _click_loop(self) -> None:
+        """Background loop that performs clicks at specified intervals."""
+        while True:
+            with self._lock:
+                if not self._running:
+                    break
+            self.click_func()
+            time.sleep(self.delay)
 
-    def stop_clicking(self):
-        self.is_running = False
-        if self._thread is not None and self._thread.is_alive():
-            self._thread.join(timeout=2.0)
+    def start(self) -> None:
+        """Starts the clicker thread safely if it is not already running."""
+        with self._lock:
+            if self._running:
+                return
+            self._running = True
+            self._thread = threading.Thread(target=self._click_loop, daemon=True)
+            self._thread.start()
 
-    def get_performance_stats(self) -> Dict[str, float]:
-        if self.start_time is None:
-            return {"clicks": 0.0, "cps": 0.0, "runtime": 0.0}
-        runtime = time.perf_counter() - self.start_time
-        cps = self.click_count / runtime if runtime > 0 else 0.0
-        return {
-            "clicks": float(self.click_count),
-            "cps": round(cps, 2),
-            "runtime": round(runtime, 2)
-        }
+    def stop(self) -> None:
+        """Stops the background clicker thread gracefully."""
+        with self._lock:
+            self._running = False
+        if self._thread:
+            self._thread.join(timeout=1.0)
+            self._thread = None
 
-    def update_interval(self, interval: float):
-        if 0.01 < interval < 10.0:
-            self.click_interval = interval
+    def update_delay(self, new_delay: float) -> None:
+        """Safely updates the delay between click events."""
+        if new_delay <= 0:
+            raise ValueError("Delay must be greater than zero seconds")
+        with self._lock:
+            self.delay = new_delay
+
+    @property
+    def is_active(self) -> bool:
+        """Returns the running state of the autoclicker."""
+        with self._lock:
+            return self._running
