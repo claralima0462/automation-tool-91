@@ -1,31 +1,37 @@
 import time
-import pyautogui
-from typing import Tuple, Optional
+import threading
+from typing import Callable
 
-class ClickProcessor:
-    """Handles automated clicking sequences based on coordinate input."""
+class EventProcessor:
+    """Handles click event throttling using a high-frequency loop."""
+    def __init__(self, interval: float = 0.001):
+        self.interval = interval
+        self.running = False
+        self._lock = threading.Lock()
 
-    def __init__(self, interval: float = 0.5) -> None:
-        """Initializes processor with delay between clicks."""
-        self.interval: float = interval
-
-    def perform_click(self, x: int, y: int) -> bool:
-        """Executes a single mouse click at specified coordinates."""
+    def execute_optimized_loop(self, action: Callable[[], None], duration: float) -> None:
+        """Executes action with microsecond-precise sleeping."""
+        self.running = True
+        start_time = time.perf_counter()
+        
+        # Cached reference to minimize attribute lookups
+        sleep = time.sleep
+        clock = time.perf_counter
+        
         try:
-            pyautogui.click(x=x, y=y)
-            time.sleep(self.interval)
-            return True
-        except (pyautogui.FailSafeException, pyautogui.PyAutoGUIException):
-            return False
+            while self.running and (clock() - start_time) < duration:
+                loop_start = clock()
+                action()
+                
+                # Dynamic sleep adjustment to account for execution drift
+                elapsed = clock() - loop_start
+                sleep_time = self.interval - elapsed
+                
+                if sleep_time > 0:
+                    sleep(sleep_time)
+        finally:
+            self.running = False
 
-    def run_sequence(self, coordinates: list[Tuple[int, int]], loops: int = 1) -> None:
-        """Iterates through a list of coordinates for a set number of loops."""
-        for _ in range(loops):
-            for x, y in coordinates:
-                if not self.perform_click(x, y):
-                    break
-
-    def update_interval(self, new_interval: float) -> None:
-        """Modifies the delay between click events."""
-        if new_interval >= 0:
-            self.interval = new_interval
+    def stop(self):
+        with self._lock:
+            self.running = False
