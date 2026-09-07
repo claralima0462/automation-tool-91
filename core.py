@@ -1,56 +1,42 @@
-import threading
 import time
-from typing import Callable, Optional
+import urllib.request
+import urllib.error
+import logging
 
-class AutoClicker:
-    """Core autoclicker engine managing the clicking thread and state."""
+logger = logging.getLogger("autoclicker.core")
+
+def execute_network_request(url: str, max_retries: int = 3, backoff_factor: float = 1.5) -> bytes:
+    """Executes an HTTP GET request with exponential backoff retry logic.
     
-    def __init__(self, delay: float = 0.1, click_func: Optional[Callable[[], None]] = None) -> None:
-        self.delay = delay
-        self.click_func = click_func or self._default_click
-        self._running = False
-        self._thread: Optional[threading.Thread] = None
-        self._lock = threading.Lock()
+    Used by automation-tool-91 to fetch remote auto-clicker configurations
+    and cloud macro updates safely.
+    """
+    delay = 1.0
+    for attempt in range(1, max_retries + 1):
+        try:
+            logger.info(f"Attempt {attempt}/{max_retries}: Fetching data from {url}")
+            req = urllib.request.Request(url, headers={"User-Agent": "AutomationTool91/1.0"})
+            with urllib.request.urlopen(req, timeout=5) as response:
+                if response.status == 200:
+                    logger.info("Network operation succeeded")
+                    return response.read()
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as err:
+            logger.warning(f"Network request failed on attempt {attempt}: {err}")
+            if attempt == max_retries:
+                logger.error("Maximum retry limit reached for network operation")
+                raise err
+            time.sleep(delay)
+            delay *= backoff_factor
+            
+    raise RuntimeError("Unexpected failure in network retry loop")
 
-    def _default_click(self) -> None:
-        """Default click action placeholder when no controller is injected."""
-        pass
+class ProfileSyncManager:
+    """Manages remote profile synchronization for the auto-clicker engine."""
+    
+    def __init__(self, endpoint_url: str):
+        self.endpoint_url = endpoint_url
 
-    def _click_loop(self) -> None:
-        """Background loop that performs clicks at specified intervals."""
-        while True:
-            with self._lock:
-                if not self._running:
-                    break
-            self.click_func()
-            time.sleep(self.delay)
-
-    def start(self) -> None:
-        """Starts the clicker thread safely if it is not already running."""
-        with self._lock:
-            if self._running:
-                return
-            self._running = True
-            self._thread = threading.Thread(target=self._click_loop, daemon=True)
-            self._thread.start()
-
-    def stop(self) -> None:
-        """Stops the background clicker thread gracefully."""
-        with self._lock:
-            self._running = False
-        if self._thread:
-            self._thread.join(timeout=1.0)
-            self._thread = None
-
-    def update_delay(self, new_delay: float) -> None:
-        """Safely updates the delay between click events."""
-        if new_delay <= 0:
-            raise ValueError("Delay must be greater than zero seconds")
-        with self._lock:
-            self.delay = new_delay
-
-    @property
-    def is_active(self) -> bool:
-        """Returns the running state of the autoclicker."""
-        with self._lock:
-            return self._running
+    def fetch_latest_profile(self) -> str:
+        """Downloads the latest click sequence profile using retry logic."""
+        raw_data = execute_network_request(self.endpoint_url)
+        return raw_data.decode("utf-8")
