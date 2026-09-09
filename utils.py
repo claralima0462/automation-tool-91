@@ -1,49 +1,79 @@
 import random
-import time
-from typing import Tuple, Optional
+from typing import Tuple
 
 
-def parse_coordinates(coord_str: str) -> Optional[Tuple[int, int]]:
-    """Parse string representation of coordinates (e.g. '100,200') into an integer tuple."""
-    if not coord_str or "," not in coord_str:
-        return None
-    try:
-        x_str, y_str = coord_str.split(",", 1)
-        return int(x_str.strip()), int(y_str.strip())
-    except ValueError:
-        return None
+def parse_interval(interval_str: str) -> float:
+    """Convert a human-readable interval string into seconds.
+
+    Supported units: 'ms' (milliseconds), 's' (seconds), 'm' (minutes).
+
+    Args:
+        interval_str: A string representing time duration (e.g., '500ms',
+          '2s').
+
+    Returns:
+        The duration in seconds as a float.
+
+    Raises:
+        ValueError: If the format is invalid or unit is unsupported.
+    """
+    interval_str = interval_str.strip().lower()
+    if interval_str.endswith("ms"):
+        try:
+            return float(interval_str[:-2]) / 1000.0
+        except ValueError:
+            pass
+    elif interval_str.endswith("s"):
+        try:
+            return float(interval_str[:-1])
+        except ValueError:
+            pass
+    elif interval_str.endswith("m"):
+        try:
+            return float(interval_str[:-1]) * 60.0
+        except ValueError:
+            pass
+    else:
+        try:
+            return float(interval_str)
+        except ValueError:
+            pass
+
+    raise ValueError(f"Invalid interval format: {interval_str}")
 
 
-def calculate_jitter_delay(base_delay: float, jitter_percent: float = 0.1) -> float:
-    """Calculate a randomized delay interval to simulate human clicking variance."""
-    if base_delay <= 0:
-        return 0.0
-    variance = base_delay * max(0.0, min(jitter_percent, 1.0))
-    return max(0.001, base_delay + random.uniform(-variance, variance))
+def calculate_jitter(base_delay: float, jitter_percentage: float) -> float:
+    """Apply a random jitter to a delay to simulate human behavior.
+
+    Args:
+        base_delay: The baseline delay in seconds.
+        jitter_percentage: The maximum percentage variance (0.0 to 1.0).
+
+    Returns:
+        The adjusted delay in seconds.
+
+    Raises:
+        ValueError: If jitter_percentage is out of bounds.
+    """
+    if not (0.0 <= jitter_percentage <= 1.0):
+        raise ValueError("Jitter percentage must be between 0.0 and 1.0")
+
+    max_delta = base_delay * jitter_percentage
+    return base_delay + random.uniform(-max_delta, max_delta)
 
 
-def format_duration(seconds: float) -> str:
-    """Format total seconds into a readable time string (e.g., '1h 15m 30s')."""
-    if seconds < 0:
-        return "0s"
-    mins, secs = divmod(int(seconds), 60)
-    hrs, mins = divmod(mins, 60)
+def is_within_bounds(
+    coords: Tuple[int, int], screen_resolution: Tuple[int, int]
+) -> bool:
+    """Verify if the target coordinates are within the screen resolution bounds.
 
-    parts = []
-    if hrs > 0:
-        parts.append(f"{hrs}h")
-    if mins > 0:
-        parts.append(f"{mins}m")
-    if secs > 0 or not parts:
-        parts.append(f"{secs}s")
+    Args:
+        coords: A tuple of (x, y) coordinates.
+        screen_resolution: A tuple of (width, height) representing resolution.
 
-    return " ".join(parts)
-
-
-def safe_sleep(duration: float, step: float = 0.05) -> bool:
-    """Sleep in small intervals to keep the thread responsive."""
-    start_time = time.time()
-    while time.time() - start_time < duration:
-        remaining = duration - (time.time() - start_time)
-        time.sleep(min(step, remaining))
-    return True
+    Returns:
+        True if coordinates are within bounds, False otherwise.
+    """
+    x, y = coords
+    width, height = screen_resolution
+    return 0 <= x < width and 0 <= y < height
