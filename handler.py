@@ -1,40 +1,35 @@
-import pyautogui
-import time
 import logging
+import time
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('automation-tool-91')
+logger = logging.getLogger(__name__)
 
-class ClickHandler:
-    """Handles click operations and safety constraints."""
+def process_click_sequence(interval: float, count: int):
+    """Executes the autoclicker logic with input validation."""
+    
+    # Input validation for core parameters
+    if not isinstance(interval, (int, float)) or interval < 0.01:
+        logger.error(f"Invalid interval: {interval}. Must be >= 0.01 seconds.")
+        return
 
-    def __init__(self, interval: float = 0.1):
-        self.interval = interval
-        self.is_running = False
+    if not isinstance(count, int) or count <= 0:
+        logger.error(f"Invalid count: {count}. Must be a positive integer.")
+        return
 
-    def start_clicking(self, clicks: int):
-        """Executes click sequence with interrupt capability."""
-        self.is_running = True
-        logger.info(f"Starting sequence: {clicks} clicks")
-        
-        try:
-            for i in range(clicks):
-                if not self.is_running:
-                    break
-                pyautogui.click()
-                time.sleep(self.interval)
-        except pyautogui.FailSafeException:
-            logger.warning("Fail-safe triggered: stopping execution")
-            self.stop_clicking()
+    logger.info(f"Starting sequence: {count} clicks at {interval}s interval")
 
-    def stop_clicking(self):
-        """Graceful halt of click operations."""
-        self.is_running = False
-        logger.info("Handler stopped by user")
+    try:
+        for i in range(count):
+            # Simulating click operation
+            logger.debug(f"Executing click {i + 1}/{count}")
+            time.sleep(interval)
+            
+    except Exception as e:
+        logger.exception(f"Sequence interrupted: {e}")
 
-    def set_interval(self, seconds: float):
-        """Updates timing between click events."""
-        if seconds > 0:
-            self.interval = seconds
-        else:
-            logger.error("Invalid interval: must be positive")
+def main():
+    # Example usage
+    config = {"interval": 0.5, "count": 10}
+    process_click_sequence(config["interval"], config["count"])
+
+if __name__ == "__main__":
+    main()
