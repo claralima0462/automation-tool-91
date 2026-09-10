@@ -1,37 +1,49 @@
 import time
-import threading
-from typing import Callable
+from typing import Dict, Any, Union
 
-class EventProcessor:
-    """Handles click event throttling using a high-frequency loop."""
-    def __init__(self, interval: float = 0.001):
-        self.interval = interval
-        self.running = False
-        self._lock = threading.Lock()
+class ClickProcessor:
+    def __init__(self, config: Dict[str, Any]):
+        self.config = config
+        self.is_running = False
 
-    def execute_optimized_loop(self, action: Callable[[], None], duration: float) -> None:
-        """Executes action with microsecond-precise sleeping."""
-        self.running = True
-        start_time = time.perf_counter()
+    def validate_inputs(self) -> Dict[str, Union[int, float, str]]:
+        """Validates the click configuration inputs before execution."""
+        delay = self.config.get("delay", 0.1)
+        clicks = self.config.get("clicks", 10)
+        button = self.config.get("button", "left")
+
+        if not isinstance(delay, (int, float)) or delay <= 0:
+            raise ValueError("Click delay must be a positive number.")
         
-        # Cached reference to minimize attribute lookups
-        sleep = time.sleep
-        clock = time.perf_counter
+        if not isinstance(clicks, int) or clicks < 0:
+            raise ValueError("Click count must be a non-negative integer.")
         
-        try:
-            while self.running and (clock() - start_time) < duration:
-                loop_start = clock()
-                action()
-                
-                # Dynamic sleep adjustment to account for execution drift
-                elapsed = clock() - loop_start
-                sleep_time = self.interval - elapsed
-                
-                if sleep_time > 0:
-                    sleep(sleep_time)
-        finally:
-            self.running = False
+        valid_buttons = {"left", "right", "middle"}
+        if not isinstance(button, str) or button.lower() not in valid_buttons:
+            raise ValueError(f"Button must be one of {valid_buttons}")
 
-    def stop(self):
-        with self._lock:
-            self.running = False
+        return {
+            "delay": float(delay),
+            "clicks": int(clicks),
+            "button": button.lower()
+        }
+
+    def run_loop(self) -> int:
+        """Executes the main autoclicker loop after validating inputs."""
+        validated = self.validate_inputs()
+        delay = validated["delay"]
+        clicks = validated["clicks"]
+        button = validated["button"]
+
+        self.is_running = True
+        completed_clicks = 0
+
+        print(f"Starting autoclicker: {clicks} clicks, {delay}s interval, button '{button}'")
+        
+        while self.is_running and completed_clicks < clicks:
+            time.sleep(delay)
+            completed_clicks += 1
+            print(f"Click {completed_clicks}/{clicks} ({button}) executed")
+
+        self.is_running = False
+        return completed_clicks
