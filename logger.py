@@ -1,31 +1,45 @@
 import logging
-from logging.handlers import RotatingFileHandler
-import os
+import sys
+from datetime import datetime
 
-def setup_logger(name: str = 'automation-tool-91', log_file: str = 'app.log') -> logging.Logger:
-    """Configures a rotating file logger for the application."""
+def setup_logger(name: str = "automation-tool-91") -> logging.Logger:
+    """
+    Configures a standard logger for automation tasks.
+    """
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
 
-    # Prevent duplicate handlers if logger is re-initialized
+    # Prevent duplicate handlers if re-initialized
     if not logger.handlers:
         formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
 
-        # 5MB log file limit with 3 backups
-        file_handler = RotatingFileHandler(
-            log_file, maxBytes=5*1024*1024, backupCount=3
-        )
-        file_handler.setFormatter(formatter)
-
-        console_handler = logging.StreamHandler()
+        # Output to stdout for easier monitoring
+        console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)
-
-        logger.addHandler(file_handler)
         logger.addHandler(console_handler)
+
+        # Optional: persistent file logging
+        log_filename = f"logs/run_{datetime.now().strftime('%Y%m%d')}.log"
+        try:
+            file_handler = logging.FileHandler(log_filename)
+            file_handler.setFormatter(formatter)
+            logger.addHandler(file_handler)
+        except OSError:
+            logger.warning("Could not initialize file logging. Check log directory.")
 
     return logger
 
-# Initialize global logger instance
-logger = setup_logger()
+def log_event(logger: logging.Logger, message: str, level: str = "info"):
+    """
+    Proxy function for standardized event logging.
+    """
+    levels = {
+        "info": logger.info,
+        "warning": logger.warning,
+        "error": logger.error,
+        "debug": logger.debug
+    }
+    log_func = levels.get(level.lower(), logger.info)
+    log_func(message)
