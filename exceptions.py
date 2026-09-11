@@ -1,34 +1,26 @@
-class AutoClickerError(Exception):
-    """Base exception class for all autoclicker errors."""
-    def __init__(self, message: str = "An automation error occurred"):
-        self.message = message
-        super().__init__(self.message)
+from typing import Optional
 
+class AutomationError(Exception):
+    """Base exception class for all automation-tool-91 errors."""
+    def __init__(self, message: str, code: Optional[int] = None) -> None:
+        super().__init__(message)
+        self.code = code
 
-class TargetNotFoundError(AutoClickerError):
-    """Raised when a visual target or UI element cannot be located."""
-    def __init__(self, target_name: str):
-        self.target_name = target_name
-        super().__init__(f"Target element '{target_name}' could not be found on screen.")
+class ClickerConfigurationError(AutomationError):
+    """Raised when the configuration parameters are invalid."""
+    pass
 
+class CoordinateOutOfBoundsError(AutomationError):
+    """Raised when click coordinates fall outside screen bounds."""
+    def __init__(self, x: int, y: int) -> None:
+        super().__init__(f"Coordinates ({x}, {y}) are outside screen bounds.", 400)
 
-class InvalidRegionError(AutoClickerError):
-    """Raised when screen coordinates or boundary regions are invalid."""
-    def __init__(self, coordinates: tuple):
-        self.coordinates = coordinates
-        super().__init__(f"Invalid screen coordinates or region boundaries: {coordinates}")
+class ExecutionTimeoutError(AutomationError):
+    """Raised when an automation sequence exceeds its duration limit."""
+    def __init__(self, duration: float) -> None:
+        super().__init__(f"Execution timed out after {duration} seconds.", 408)
 
-
-class ClickTimeoutError(AutoClickerError):
-    """Raised when an automated action exceeds the allowed execution time."""
-    def __init__(self, action_name: str, timeout: float):
-        self.action_name = action_name
-        self.timeout = timeout
-        super().__init__(f"Action '{action_name}' timed out after {timeout} seconds.")
-
-
-class ActionCancelledError(AutoClickerError):
-    """Raised when an ongoing automation task is interrupted or cancelled."""
-    def __init__(self, reason: str = "User requested cancellation"):
-        self.reason = reason
-        super().__init__(f"Automation task cancelled: {reason}")
+class DriverConnectionError(AutomationError):
+    """Raised when input driver fails to interface with OS."""
+    def __init__(self, driver_name: str) -> None:
+        super().__init__(f"Failed to connect to input driver: {driver_name}", 503)
