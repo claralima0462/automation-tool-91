@@ -1,26 +1,27 @@
-from typing import Optional
-
 class AutomationError(Exception):
-    """Base exception class for all automation-tool-91 errors."""
-    def __init__(self, message: str, code: Optional[int] = None) -> None:
-        super().__init__(message)
-        self.code = code
+    """Base exception for automation-tool-91."""
+    pass
 
 class ClickerConfigurationError(AutomationError):
-    """Raised when the configuration parameters are invalid."""
+    """Raised when configuration settings are invalid."""
+    pass
+
+class InputDeviceError(AutomationError):
+    """Raised when the mouse or keyboard input fails."""
     pass
 
 class CoordinateOutOfBoundsError(AutomationError):
-    """Raised when click coordinates fall outside screen bounds."""
-    def __init__(self, x: int, y: int) -> None:
-        super().__init__(f"Coordinates ({x}, {y}) are outside screen bounds.", 400)
+    """Raised when clicking outside screen boundaries."""
+    def __init__(self, x, y):
+        self.message = f"Coordinates ({x}, {y}) are outside valid screen bounds"
+        super().__init__(self.message)
 
 class ExecutionTimeoutError(AutomationError):
-    """Raised when an automation sequence exceeds its duration limit."""
-    def __init__(self, duration: float) -> None:
-        super().__init__(f"Execution timed out after {duration} seconds.", 408)
+    """Raised when the clicker fails to trigger within time limits."""
+    pass
 
-class DriverConnectionError(AutomationError):
-    """Raised when input driver fails to interface with OS."""
-    def __init__(self, driver_name: str) -> None:
-        super().__init__(f"Failed to connect to input driver: {driver_name}", 503)
+def validate_coordinates(x, y, max_x, max_y):
+    """Check if coordinates are within defined screen resolution."""
+    if not (0 <= x <= max_x) or not (0 <= y <= max_y):
+        raise CoordinateOutOfBoundsError(x, y)
+    return True
