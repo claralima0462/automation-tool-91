@@ -1,49 +1,21 @@
-"""Validation utilities for autoclicker configuration and input parameters."""
+def validate_click_params(interval, count):
+    """Validates autoclicker parameters to prevent system freezing."""
+    # Ensure interval is a float within a safe range (0.01s to 60s)
+    if not isinstance(interval, (int, float)) or not (0.01 <= interval <= 60.0):
+        raise ValueError(f"Invalid interval: {interval}. Must be between 0.01 and 60.0 seconds.")
 
-from typing import Tuple, Optional
+    # Ensure count is a positive integer or -1 for infinite
+    if not isinstance(count, int) or (count < 1 and count != -1):
+        raise ValueError(f"Invalid count: {count}. Must be -1 or a positive integer.")
 
+    return True
 
-class ValidationError(Exception):
-    """Raised when configuration parameters fail validation checks."""
-    pass
-
-
-def validate_coordinates(x: int, y: int, screen_bounds: Optional[Tuple[int, int]] = None) -> Tuple[int, int]:
-    """Validate click coordinates against screen boundaries and edge cases."""
+def validate_coordinates(x, y):
+    """Validates screen coordinates for pointer events."""
     if not isinstance(x, int) or not isinstance(y, int):
-        raise ValidationError(f"Coordinates must be integers, got ({type(x).__name__}, {type(y).__name__})")
+        raise TypeError("Coordinates must be integers.")
     
     if x < 0 or y < 0:
-        raise ValidationError(f"Coordinates cannot be negative: ({x}, {y})")
+        raise ValueError("Coordinates cannot be negative.")
         
-    if screen_bounds:
-        max_x, max_y = screen_bounds
-        if x > max_x or y > max_y:
-            raise ValidationError(f"Coordinates ({x}, {y}) exceed screen bounds ({max_x}, {max_y})")
-            
-    return x, y
-
-
-def validate_interval(interval: float, min_interval: float = 0.001) -> float:
-    """Validate click interval to prevent system lockup from extremely high frequency."""
-    try:
-        val = float(interval)
-    except (ValueError, TypeError):
-        raise ValidationError(f"Interval must be a valid number, got {interval}")
-
-    if val < 0:
-        raise ValidationError(f"Interval cannot be negative: {val}")
-
-    if val < min_interval:
-        raise ValidationError(f"Interval {val}s is below safety threshold of {min_interval}s")
-
-    return val
-
-
-def validate_click_count(count: int) -> int:
-    """Validate repetition count for clicks."""
-    if not isinstance(count, int):
-        raise ValidationError(f"Click count must be an integer, got {type(count).__name__}")
-    if count < 0:
-        raise ValidationError(f"Click count cannot be negative: {count}")
-    return count
+    return True
