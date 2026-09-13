@@ -1,27 +1,26 @@
 class AutomationError(Exception):
-    """Base exception for automation-tool-91."""
+    """Base exception for automation-tool-91 errors."""
     pass
 
-class ClickerConfigurationError(AutomationError):
-    """Raised when configuration settings are invalid."""
+class ConfigurationError(AutomationError):
+    """Raised when config file is invalid or missing."""
     pass
 
-class InputDeviceError(AutomationError):
-    """Raised when the mouse or keyboard input fails."""
+class HardwareInputError(AutomationError):
+    """Raised when mouse or keyboard injection fails."""
     pass
-
-class CoordinateOutOfBoundsError(AutomationError):
-    """Raised when clicking outside screen boundaries."""
-    def __init__(self, x, y):
-        self.message = f"Coordinates ({x}, {y}) are outside valid screen bounds"
-        super().__init__(self.message)
 
 class ExecutionTimeoutError(AutomationError):
-    """Raised when the clicker fails to trigger within time limits."""
+    """Raised when an automation sequence times out."""
     pass
 
-def validate_coordinates(x, y, max_x, max_y):
-    """Check if coordinates are within defined screen resolution."""
-    if not (0 <= x <= max_x) or not (0 <= y <= max_y):
-        raise CoordinateOutOfBoundsError(x, y)
-    return True
+class InterruptSignal(AutomationError):
+    """Raised when the user interrupts the automation process."""
+    pass
+
+def handle_exception(exc: Exception) -> None:
+    """Centralized error reporting for the automation process."""
+    if isinstance(exc, AutomationError):
+        print(f"[Automation Error]: {exc}")
+    else:
+        print(f"[Unexpected System Error]: {type(exc).__name__} - {exc}")
